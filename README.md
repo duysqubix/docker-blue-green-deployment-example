@@ -37,6 +37,24 @@ chmod +x deploy-blue-green.zsh
    - Container metadata (hostname, Traefik status, timestamp) so you can tell which stack you are hitting.
 2. Re-run `./deploy-blue-green.zsh` to promote the other color and refresh the page—you should see the UI swap between **blue** and **green** instantly.
 
+### REST polling client
+
+If you want to keep an eye on the `/color` endpoint directly from your terminal, run the included Python poller:
+
+```bash
+uv run rest-client.py
+```
+
+It prints each HTTP status, latency, and response body (JSON by default) so you can confirm which stack is live even without the browser. Useful flags:
+
+- `--url http://host:port/path` to target a different endpoint.
+- `--interval 1.5` to slow down/speed up the polling loop (seconds, 0 runs back-to-back).
+- `--count 10` to stop after a set number of requests; omit to keep running until Ctrl+C.
+- `--header Authorization=...` (repeatable) to send extra HTTP headers.
+- `--raw` to display the raw response body when you do not want JSON parsing.
+
+Any Python 3.11+ interpreter with `requests` installed works, but using `uv run` ensures dependencies from `pyproject.toml` are pulled in automatically.
+
 ### Tearing things down
 
 ```bash

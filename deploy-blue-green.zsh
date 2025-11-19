@@ -2,9 +2,15 @@
 set -euo pipefail
 
 # Config
-APP_NAME="myapp"
+APP_NAME="${APP_NAME:-myapp}"
 LIVE_LABEL_KEY="traefik.enable"
 LIVE_LABEL_VALUE="true"
+
+ACTION="${1:-deploy}"
+
+usage() {
+  echo "Usage: $0 [deploy|shutdown]" >&2
+}
 
 # Always deploy the latest image tag
 VERSION_TAG="latest"
@@ -50,6 +56,19 @@ start_stack() {
   docker compose up -d --build  --pull always
 }
 
+shutdown_all_stacks() {
+  echo "Shutting down all ${APP_NAME} stacks..."
+  for color in blue green; do
+    echo "Stopping stack '${color}'..."
+    COMPOSE_PROJECT_NAME="${APP_NAME}_${color}" \
+    VERSION_TAG="${VERSION_TAG}" \
+    DEPLOY_COLOR="${color}" \
+    TRAEFIK_ENABLE="false" \
+    docker compose down --remove-orphans
+  done
+  echo "All stacks have been stopped."
+}
+
 generate_priority() {
   if command -v python3 >/dev/null 2>&1; then
     python3 - <<'PY'
@@ -60,6 +79,19 @@ PY
     date +%s
   fi
 }
+
+case "$ACTION" in
+  deploy)
+    ;;
+  shutdown)
+    shutdown_all_stacks
+    exit 0
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
 
 LIVE_COLOR=$(get_live_color)
 
