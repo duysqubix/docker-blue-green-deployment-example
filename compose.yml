@@ -1,0 +1,23 @@
+services:
+
+  webapp:
+    image: blue-green-webapp:${VERSION_TAG:-latest}
+    build:
+      context: ./webapp
+    environment:
+      DEPLOY_COLOR: ${DEPLOY_COLOR:?Missing DEPLOY_COLOR environment variable}
+      TRAEFIK_ENABLE: ${TRAEFIK_ENABLE:?Missing TRAEFIK_ENABLE environment variable}
+      PORT: 3000
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:?Missing TRAEFIK_ENABLE environment variable}"
+      # Use color-specific router/service names so Traefik treats each stack separately.
+      - "traefik.http.routers.webapp-${DEPLOY_COLOR}.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webapp-${DEPLOY_COLOR}.entrypoints=web"
+      - "traefik.http.routers.webapp-${DEPLOY_COLOR}.service=webapp-${DEPLOY_COLOR}"
+      - "traefik.http.routers.webapp-${DEPLOY_COLOR}.priority=${TRAEFIK_PRIORITY:-100}"
+      - "traefik.http.services.webapp-${DEPLOY_COLOR}.loadbalancer.server.port=3000"
+
+networks:
+  default:
+    name: test-network
+    external: true
