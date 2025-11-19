@@ -27,8 +27,23 @@ chmod +x deploy-blue-green.zsh
 ```
 
 - On the first run the script boots the **blue** stack and enables it in Traefik.
-- Subsequent runs create/update the idle color, let you validate it, and then flip traffic.
-- At any point the script prints the current live color (look for `Current live color: ...`).
+- Subsequent runs create/update the idle color, wait for the app to pass an HTTP health check from inside the container, and automatically flip traffic once validation succeeds.
+- At any point the script prints structured logs including the current live color (look for `Current live color: ...`).
+
+You can customize behaviour via environment variables or a local `.env` file that the script loads automatically. Useful knobs include:
+
+```env
+APP_NAME=myapp
+HEALTHCHECK_ENDPOINT=http://localhost:3000/color
+HEALTHCHECK_TIMEOUT=45
+SKIP_HEALTHCHECK=false
+```
+
+Command-line options:
+
+- `./deploy-blue-green.zsh deploy --skip-health-check` – promote without running the health probe (not recommended outside dev).
+- `./deploy-blue-green.zsh rollback` – instantly re-enable the previously idle color if a deployment misbehaves while leaving both stacks running for inspection.
+- `./deploy-blue-green.zsh shutdown` – stop both color stacks.
 
 ### Visual confirmation
 
